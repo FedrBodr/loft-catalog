@@ -8,7 +8,7 @@ export default defineConfig({
   trailingSlash: 'always',
   integrations: [
     preact(),
-    sitemap({ filter: (page) => !page.includes('/edit/') && !page.includes('/data/') }),
+    sitemap({ filter: (page) => !page.includes('/edit/') && !page.includes('/data/') && !/\/dlya\/[^/]+\/$/.test(page) && !page.endsWith('/404/') }),
   ],
   vite: { plugins: [tailwindcss()] },
 });

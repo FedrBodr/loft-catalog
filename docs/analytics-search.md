@@ -37,6 +37,12 @@ Document: analytics-search
 - Скрипты: `scripts/import/parse_sources.py` (HTML → candidates.json, карта URL
   `l2r/urls.txt`), `build_candidates.py` (геокодинг, дедуп, запись в CSV),
   `fill_metro.py`. Сырые страницы и кэш геокодера — в scratchpad, не в репо.
+- Защита от фильтра за тонкий/дублирующий контент (2026-10-12): комбинации «задача × метро»
+  и «вместимость × метро» (926 страниц) не генерируются (`COMBO_PAGES=false` в pages.ts);
+  страницы `/dlya/<задача>/` — `noindex, follow` и вне sitemap, пока не фильтруют данные;
+  404 — noindex; www и fedrbodr.github.io → 301 на loftmap.ru; canonical на всех страницах.
+  В индекс идут: карточки (1 967), метро (104), округа (9), вместимость (6), 6 основных.
+  Sitemap 2 092 URL. Включать комбинации обратно — когда появятся verified-данные.
 - Страницы списков ограничены 240 карточками (`MAX_CARDS`), дальше блок «уточните по
   метро» (`MetroNav.astro`). Сборка: 3 024 страницы, sitemap 3 023 URL.
 - Не взяты: bash.today и goloft.ru (нет адресов и прямых контактов, только метро и

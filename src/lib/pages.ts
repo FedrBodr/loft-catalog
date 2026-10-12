@@ -2,6 +2,9 @@ import type { Loft } from './data';
 import districts from '../../data/districts.json';
 
 export const MIN_PER_PAGE = 4;
+/** Комбинации «задача × метро» и «вместимость × метро» — почти дубли страниц метро, пока
+ *  нет проверенных данных не генерируем (риск фильтра за тонкий/дублирующий контент). */
+export const COMBO_PAGES = false;
 /** Больше карточек на одной странице не рендерим: ~1 КБ на карточку, дальше — ссылки на метро. */
 export const MAX_CARDS = 240;
 
@@ -44,6 +47,8 @@ export interface ListPage {
   description: string;
   lofts: Loft[];
   crumbs: { name: string; path: string }[];
+  /** noindex,follow: страница есть для навигации, но в индекс и sitemap не идёт. */
+  noindex?: boolean;
 }
 
 function titleFor(where: string, ls: Loft[], people?: number): { title: string; description: string } {
@@ -89,7 +94,8 @@ export function listPages(all: Loft[]): ListPage[] {
     const ls = all; // задача пока не фильтрует данные — все лофты подходят, фильтры уточняют
     if (!enough(ls)) continue;
     const path = `/dlya/${slug}/`;
-    pages.push({ path, h1: `${t.h1} в Москве`, ...titleFor(`для ${t.title === 'корпоратив' ? 'корпоратива' : t.title} в Москве`, ls), lofts: ls, crumbs: [home, { name: t.h1, path }] });
+    pages.push({ path, h1: `${t.h1} в Москве`, ...titleFor(`для ${t.title === 'корпоратив' ? 'корпоратива' : t.title} в Москве`, ls), lofts: ls, crumbs: [home, { name: t.h1, path }], noindex: true });
+    if (!COMBO_PAGES) continue;
     for (const [station, sls] of byMetro(ls)) {
       if (!enough(sls)) continue;
       const p2 = `/dlya/${slug}/${translit(station)}/`;
@@ -101,6 +107,7 @@ export function listPages(all: Loft[]): ListPage[] {
     if (!enough(ls)) continue;
     const path = `/na/${n}-chelovek/`;
     pages.push({ path, h1: `Лофты на ${n} человек в Москве`, ...titleFor('в Москве', ls, n), lofts: ls, crumbs: [home, { name: `на ${n} человек`, path }] });
+    if (!COMBO_PAGES) continue;
     for (const [station, sls] of byMetro(ls)) {
       if (!enough(sls)) continue;
       const p2 = `/na/${n}-chelovek/${translit(station)}/`;
