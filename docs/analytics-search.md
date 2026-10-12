@@ -31,7 +31,7 @@ Document: analytics-search
 - Ключи API (локально, `~/.config/fedrbodr/`): 2ГИС демо-ключ `2gis.key` (Places +
   Geocoder, 1 000 запросов/мес каждый, до 2026-11-11, кабинет platform.2gis.ru, workspace
   loftmap.ru); Яндекс Геокодер `yandex-geocoder.key` (бесплатный тариф, кабинет
-  yandex.ru/maps-api/console) — на 2026-10-12 ключ ещё отвечал «Invalid api key».
+  yandex.ru/maps-api/console) — активировался примерно через час после создания, 1 000 запросов/сутки; `regeocode_2gis.py --yandex` уточнил ещё 14 карточек.
   `scripts/import/regeocode_2gis.py` уточнил координаты/округ у 240 карточек, которые
   стояли на станции метро; осталось 17 приблизительных и 24 без округа.
 - Скрипты: `scripts/import/parse_sources.py` (HTML → candidates.json, карта URL

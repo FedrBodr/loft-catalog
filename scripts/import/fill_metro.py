@@ -32,6 +32,19 @@ for x in rows:
         x['notes'] = ('метро по ближайшему лофту; ' + (x['notes'] or '')).strip()
         filled += 1
 
+# Округ для карточек с пометкой «округ не определён» — по ближайшему лофту с уверенным округом.
+import re
+UNK = re.compile(r'округ не определён \([^)]*\); ')
+sure = [(float(x['lat']), float(x['lon']), x['district']) for x in rows if x['district'] and not UNK.search(x['notes'] or '') and x['lat']]
+okr = 0
+for x in rows:
+    if not UNK.search(x['notes'] or '') or not x['lat']: continue
+    p = (float(x['lat']), float(x['lon']))
+    best = min(sure, key=lambda k: dist(p, k[:2]), default=None)
+    if best and dist(p, best[:2]) <= 1.5:
+        x['district'] = best[2]; x['notes'] = UNK.sub('округ по ближайшему лофту; ', x['notes']); okr += 1
+print(f'okrug filled: {okr}')
+
 with CSV.open('w', encoding='utf-8', newline='') as f:
     w = csv.DictWriter(f, fieldnames=fields); w.writeheader(); w.writerows(rows)
 print(f'metro filled: {filled}, still unknown: {sum(1 for x in rows if x["metro"] in ("", "Москва"))}')
