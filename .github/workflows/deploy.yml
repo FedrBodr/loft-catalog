@@ -15,6 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Данные лофтов — в приватном репо, доступ по read-only deploy key.
+      - uses: actions/checkout@v4
+        with:
+          repository: FedrBodr/loft-catalog-data
+          ssh-key: ${{ secrets.DATA_DEPLOY_KEY }}
+          path: data/private
       - uses: actions/setup-node@v4
         with:
           node-version: 23

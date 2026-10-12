@@ -1,6 +1,6 @@
 """Уточняет координаты и округ через геокодер 2ГИС для карточек с приблизительной геопозицией.
 
-Берёт строки data/lofts.csv, у которых в notes «координаты по станции метро» или «округ не
+Берёт строки data/private/lofts.csv, у которых в notes «координаты по станции метро» или «округ не
 определён», шлёт адрес в 2ГИС (ключ ~/.config/fedrbodr/2gis.key, демо-лимит 1 000/мес) и,
 если ответ — конкретное здание, пишет lat/lon/district и снимает пометку.
 
@@ -10,7 +10,7 @@ import sys, re, csv, json, time, urllib.parse, urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-CSV = ROOT / 'data/lofts.csv'
+CSV = ROOT / 'data/private/lofts.csv'
 KEY = (Path.home() / '.config/fedrbodr/2gis.key').read_text().strip()
 args = sys.argv[1:]
 dry = '--dry' in args

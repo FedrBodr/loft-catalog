@@ -4,7 +4,8 @@ Document: readme
 # LoftMap — каталог лофтов Москвы
 
 **loftmap.ru**: все лофты Москвы без комиссии, с проверенной ценой за вечер и свободными
-датами. Статика на Astro, данные в `data/lofts.csv`, деплой на GitHub Pages.
+датами. Статика на Astro, данные в приватном репо `FedrBodr/loft-catalog-data` (клонируется в
+`data/private/`), деплой на GitHub Pages.
 
 - [docs/idea.md](docs/idea.md) — идея и рынок
 - [docs/superpowers/specs/2026-10-12-loftmap-mvp-design.md](docs/superpowers/specs/2026-10-12-loftmap-mvp-design.md) — спек MVP
@@ -15,15 +16,18 @@ Document: readme
 ## Разработка
 
 ```bash
+git clone git@github.com:FedrBodr/loft-catalog-data.git data/private   # один раз, нужен доступ
 npm i
-npm run validate   # проверка data/lofts.csv
+npm run validate   # проверка data/private/lofts.csv
 npm test
 npm run dev        # http://localhost:4321
 npm run build
 ```
 
-Данные: `data/lofts.csv` (источник правды), `data/updates/<id>.json` (правки лофтов),
-`data/calls/*.csv` (результаты обзвона). Поля — в спеке §5.1.
+Данные в `data/private/` (приватный репо, в публичный не коммитим): `lofts.csv` (источник
+правды), `updates/<id>.json` (правки лофтов), `calls/*.csv` (результаты переписки агента).
+Поля — в спеке §5.1. Изменения данных коммитятся и пушатся в `loft-catalog-data`, сайт
+пересобирается вручную (`gh workflow run deploy.yml`) или следующим пушем кода.
 
 Связь с «Пространством»: каталог — витрина и источник заявок, продаём 3D-карточки
 (репозиторий FedrBodr/prostranstvo).

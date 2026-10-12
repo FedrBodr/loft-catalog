@@ -195,13 +195,15 @@ export function mergeUpdates(rows: RawRow[], updates: Update[], warn: (m: string
 export const stripUnverified = (l: Loft): Loft => (l.status === 'verified' ? l : { ...l, price_hour_from: null });
 
 const ROOT = process.cwd();
+/** Данные лежат в приватном репо FedrBodr/loft-catalog-data, склонированном в data/private/. */
+export const DATA = join(ROOT, 'data/private');
 
 let cache: Loft[] | null = null;
 export function loadLofts(): Loft[] {
   if (cache) return cache;
-  const rows = mergeUpdates(readCsv(join(ROOT, 'data/lofts.csv')), readUpdates(join(ROOT, 'data/updates')));
+  const rows = mergeUpdates(readCsv(join(DATA, 'lofts.csv')), readUpdates(join(DATA, 'updates')));
   const errors = validateLofts(rows);
-  if (errors.length) throw new Error('Ошибки в data/lofts.csv:\n' + errors.join('\n'));
+  if (errors.length) throw new Error('Ошибки в data/private/lofts.csv:\n' + errors.join('\n'));
   cache = rows.map(rowToLoft).map(stripUnverified);
   return cache;
 }

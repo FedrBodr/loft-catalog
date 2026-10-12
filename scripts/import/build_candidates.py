@@ -1,4 +1,4 @@
-"""Геокодирует кандидатов и дописывает их в data/lofts.csv со статусом candidate.
+"""Геокодирует кандидатов и дописывает их в data/private/lofts.csv со статусом candidate.
 
   build_candidates.py <candidates.json> [--cache geocache.json] [--limit N]
 
@@ -11,7 +11,7 @@ import sys, re, json, csv, time, urllib.parse, urllib.request, urllib.error
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-CSV = ROOT / 'data/lofts.csv'
+CSV = ROOT / 'data/private/lofts.csv'
 UA = 'loftmap.ru catalog builder (fedrbodrlain@gmail.com)'
 args = sys.argv[1:]
 src = Path(args[0])

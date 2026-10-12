@@ -3,13 +3,13 @@
 Берём станцию ближайшего лофта с известным метро в радиусе RADIUS_KM — в каталоге
 2 000+ точек, покрытие центра плотное. Если соседей нет, оставляем «Москва».
 
-  fill_metro.py            # правит data/lofts.csv на месте
+  fill_metro.py            # правит data/private/lofts.csv на месте
 """
 import csv, math
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-CSV = ROOT / 'data/lofts.csv'
+CSV = ROOT / 'data/private/lofts.csv'
 RADIUS_KM = 1.2
 
 def dist(a, b):
