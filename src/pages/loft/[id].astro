@@ -45,6 +45,7 @@ const yes = (b: boolean | null) => b == null ? '—' : b ? 'да' : 'нет';
     {l.telegram && <a href={`https://t.me/${l.telegram}`} data-track="contact_click" data-loft={l.id} class="btn-ghost" rel="nofollow noopener">Telegram</a>}
     {l.whatsapp && <a href={`https://wa.me/${l.whatsapp.replace(/\D/g, '')}`} data-track="contact_click" data-loft={l.id} class="btn-ghost" rel="nofollow noopener">WhatsApp</a>}
     {l.site && <a href={l.site} class="btn-ghost" rel="nofollow noopener" target="_blank">Сайт площадки</a>}
+    {l.booking_url && <a href={l.booking_url} class="btn-ghost" rel="nofollow noopener" target="_blank" data-track="contact_click" data-loft={l.id}>Онлайн-бронь на GoLoft{l.booking_price_hour ? ` · от ${fmt(l.booking_price_hour)}/час` : ''}</a>}
     {l.has_3d && <a href={l.has_3d} class="btn-ghost" target="_blank" rel="noopener">3D-прогулка</a>}
   </div>
 

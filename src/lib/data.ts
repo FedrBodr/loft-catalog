@@ -44,6 +44,9 @@ export interface Loft {
   source: string;
   photos: string[];
   has_3d: string;
+  /** Ссылка на онлайн-бронь на сторонней платформе (goloft и т. п.) и её ставка «от». */
+  booking_url: string;
+  booking_price_hour: number | null;
   notes: string;
 }
 
@@ -120,6 +123,8 @@ export function rowToLoft(r: RawRow): Loft {
     source: r.source?.trim() ?? '',
     photos: list(r.photos),
     has_3d: r.has_3d?.trim() ?? '',
+    booking_url: r.booking_url?.trim() ?? '',
+    booking_price_hour: num(r.booking_price_hour),
     notes: r.notes ?? '',
   };
 }

@@ -34,6 +34,7 @@ const d = (s: string) => s.slice(8, 10) + '.' + s.slice(5, 7);
     {l.corkage && <><dt class="text-ink/60">Свой алкоголь</dt><dd>{l.corkage.kind === 'free' ? 'да, бесплатно' : l.corkage.kind === 'fee' ? `да, сбор ${fmt(l.corkage.fee!)}` : 'нет'}</dd></>}
     {l.own_catering != null && <><dt class="text-ink/60">Своя еда</dt><dd>{l.own_catering ? 'да' : 'нет'}</dd></>}
   </dl>
+  {l.booking_url && <p class="text-sm text-ink/70">Онлайн-бронь на <a href={l.booking_url} rel="nofollow noopener" target="_blank" class="underline hover:text-brick">GoLoft</a>{l.booking_price_hour ? ` от ${fmt(l.booking_price_hour)}/час` : ''}</p>}
   {fresh && <p class="text-sm"><span class="text-green-700 font-medium">Свободно в декабре:</span> {l.free_dates_dec.map(d).join(', ')}</p>}
   <div class="mt-auto flex gap-2 pt-1">
     <a href={`/loft/${l.id}/`} class="btn-ghost text-sm py-1.5">Подробнее</a>
