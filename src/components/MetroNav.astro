@@ -1,0 +1,12 @@
+---
+// Блок «уточните по метро»: показывается, когда карточек больше, чем выведено на странице.
+interface Props { total: number; shown: number; links: { station: string; count: number; path: string }[] }
+const { total, shown, links } = Astro.props;
+---
+{total > shown && (
+  <section class="mt-8 rounded-xl border border-ink/15 bg-sand/40 p-5">
+    <p class="font-semibold">Показаны первые {shown} из {total} лофтов — самые дешёвые и проверенные.</p>
+    <p class="text-sm text-ink/70 mt-1">Остальные — на страницах станций метро или через фильтры сверху.</p>
+    <ul class="mt-3 flex flex-wrap gap-2 text-sm">{links.slice(0, 40).map((l) => <li><a href={l.path} class="inline-block rounded-full border border-ink/20 px-3 py-1 hover:border-brick hover:text-brick">{l.station} <span class="text-ink/50">{l.count}</span></a></li>)}</ul>
+  </section>
+)}

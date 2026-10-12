@@ -2,6 +2,13 @@ import type { Loft } from './data';
 import districts from '../../data/districts.json';
 
 export const MIN_PER_PAGE = 4;
+/** Больше карточек на одной странице не рендерим: ~1 КБ на карточку, дальше — ссылки на метро. */
+export const MAX_CARDS = 240;
+
+/** Станции метро с ≥ MIN_PER_PAGE лофтов, по убыванию числа лофтов — для блока «уточните по метро». */
+export const metroLinks = (ls: Loft[]) =>
+  [...byMetro(ls)].filter(([, v]) => v.length >= MIN_PER_PAGE).sort((a, b) => b[1].length - a[1].length)
+    .map(([station, v]) => ({ station, count: v.length, path: `/metro/${translit(station)}/` }));
 export const TASKS = districts.tasks as Record<string, { title: string; h1: string }>;
 export const CAPACITIES = districts.capacities as number[];
 export const DISTRICTS = districts.districts as string[];

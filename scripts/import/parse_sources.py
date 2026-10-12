@@ -37,6 +37,13 @@ def norm_phone(p: str):
     if len(d) == 10: return '+7' + d
     return None
 
+OBLAST = re.compile(r'област|Мытищ|Химк|Люберц|Балаших|Красногорск|Одинцов|Подольск|Реутов|Королёв|Королев|Долгопрудн|Видное|Домодедов|Жуковск|Щёлков|Щелков|Пушкино|Лобн|Дзержинск|Котельник|Раменск|Истр|Солнечногорск|Наро-Фоминск|Сергиев|Ногинск|Электростал|Фрязин|Ивантеевк|Лыткарин|Апрелевк|Голицын|Звенигород|Руза|Волоколамск|Клин\b|Дмитров|Чехов|Серпухов|Ступино|Кашир|Коломн|Воскресенск|Егорьевск|Орехово-Зуев|Павловск|Можайск|Красноармейск|Нахабин|Дедовск|Сходн|Новогорск|Шереметьев|Быково|Малаховк|Красков|Томилин|Железнодорожн|Старая Купавна|Лосино|Монино', re.I)
+L2R_URLS = {}
+_u = src / 'l2r/urls.txt'
+if _u.exists():
+    for line in _u.read_text().split('\n'):
+        if ' ' in line: k, v = line.split(' ', 1); L2R_URLS[k] = v.strip()
+
 def parse_l2r(path: Path):
     s = path.read_text(encoding='utf-8', errors='ignore')
     m = re.search(r'<h1 itemprop="name"[^>]*>(.*?)</h1>', s, re.S)
@@ -46,6 +53,8 @@ def parse_l2r(path: Path):
     name = short_name(name)
     addr = re.search(r'itemprop="streetAddress">\s*(.*?)</span>', s, re.S)
     addr = clean(addr.group(1)) if addr else ''
+    # только Москва: без Подмосковья (bbox геокодера пропускает Мытищи/Химки/Люберцы)
+    if not addr.lower().startswith('москва') or OBLAST.search(addr): return None
     metro = re.search(r'metro\.svg[^>]*>\s*</span>\s*([^<]+?)\s*(?:<|$)', s, re.S)
     metro = clean(metro.group(1)) if metro else ''
     phones = [norm_phone(p) for p in re.findall(r'href="tel:([^"]+)"', s)]
@@ -57,7 +66,7 @@ def parse_l2r(path: Path):
     price = re.search(r'Час\s*<span><small>от</small>\s*([\d\s]+)\s*<i', s, re.S)
     site = re.search(r'href="(https?://(?!www\.loft2rent|loft2rent)[^"]+)"[^>]*>\s*(?:Сайт|сайт)', s)
     return {
-        'source': 'loft2rent', 'source_url': 'https://www.loft2rent.ru' + re.search(r'/loft/\d+/\d+/', str(path).replace('.html', '/').replace('pages/', 'loft/')).group(0) if False else '',
+        'source': 'loft2rent', 'source_url': L2R_URLS.get(path.stem, ''),
         'name': name, 'address': addr, 'metro': metro, 'phone': phones[0] if phones else '',
         'telegram': tg.group(1) if tg else '', 'site': site.group(1) if site else '',
         'area_m2': num(area.group(1)) if area else None,

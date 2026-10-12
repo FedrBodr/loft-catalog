@@ -7,7 +7,7 @@
 координаты станции метро и пометка в notes. Дубли (тот же адрес + похожее имя или тот же
 телефон + имя) пропускаются.
 """
-import sys, re, json, csv, time, urllib.parse, urllib.request
+import sys, re, json, csv, time, urllib.parse, urllib.request, urllib.error
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -28,19 +28,95 @@ def http(url):
     with urllib.request.urlopen(req, timeout=20) as r:
         return json.loads(r.read().decode())
 
-def geocode(q):
-    if q in cache: return cache[q]
+NOMINATIM_BLOCKED_UNTIL = 0.0
+
+def _nominatim(q):
+    global NOMINATIM_BLOCKED_UNTIL
+    if time.time() < NOMINATIM_BLOCKED_UNTIL: return None
     url = 'https://nominatim.openstreetmap.org/search?' + urllib.parse.urlencode(
         {'format': 'json', 'limit': 1, 'accept-language': 'ru', 'countrycodes': 'ru', 'addressdetails': 1, 'q': q})
     try:
         d = http(url)
+    except urllib.error.HTTPError as e:
+        if e.code == 429: NOMINATIM_BLOCKED_UNTIL = time.time() + 600; print('  nominatim 429 → пауза 10 мин')
+        else: print('  nominatim error', q, e)
+        return None
     except Exception as e:  # noqa: BLE001
-        print('  geocode error', q, e); d = []
-    time.sleep(1.1)
-    cache[q] = {'lat': float(d[0]['lat']), 'lon': float(d[0]['lon']), 'name': d[0]['display_name'],
-                'rayon': (d[0].get('address', {}).get('city_district') or d[0].get('address', {}).get('suburb') or '')} if d else None
+        print('  nominatim error', q, e); return None
+    finally:
+        time.sleep(1.5)
+    if not d: return {}
+    a = d[0].get('address', {})
+    return {'lat': float(d[0]['lat']), 'lon': float(d[0]['lon']), 'name': d[0]['display_name'],
+            'rayon': a.get('city_district') or a.get('suburb') or '', 'src': 'nominatim'}
+
+def _house(a: str):
+    m = re.search(r'(\d+)\s*(?:/\s*(\d+))?\s*([ск]\s?\d+)?', a.split(',', 1)[-1])
+    return (m.group(1), (m.group(3) or '').replace(' ', '')) if m else (None, '')
+
+def _photon(q):
+    """Photon (komoot) — без жёсткого лимита, но нечёткий: принимаем только совпавший номер дома и улицу."""
+    url = 'https://photon.komoot.io/api/?' + urllib.parse.urlencode({'q': q, 'limit': 5, 'lang': 'default', 'lat': 55.75, 'lon': 37.62})
+    try:
+        d = http(url)
+    except Exception as e:  # noqa: BLE001
+        print('  photon error', q, e); return None
+    finally:
+        time.sleep(1.0)
+    house, bld = _house(q)
+    street_words = [w for w in re.findall(r'[А-Яа-яё-]{4,}', q.split(',', 1)[-1]) if w.lower() not in ('улица', 'переулок', 'проспект', 'набережная', 'бульвар', 'шоссе', 'проезд', 'площадь', 'строение', 'корпус')]
+    for f in d.get('features', []):
+        pr = f['properties']
+        if pr.get('city') != 'Москва' and pr.get('state') != 'Москва': continue
+        hn = (pr.get('housenumber') or '').replace(' ', '').lower()
+        st = (pr.get('street') or pr.get('name') or '').lower()
+        if house and not hn.startswith(house): continue
+        if bld and bld.lower() not in hn: continue
+        if street_words and not any(w.lower()[:5] in st for w in street_words): continue
+        lon, lat = f['geometry']['coordinates']
+        return {'lat': lat, 'lon': lon, 'name': ', '.join(filter(None, [pr.get('street'), pr.get('housenumber'), pr.get('city')])),
+                'rayon': pr.get('district') or '', 'src': 'photon'}
+    return {}
+
+TYPE_WORDS = ('улица', 'переулок', 'проспект', 'набережная', 'бульвар', 'шоссе', 'проезд', 'площадь', 'аллея', 'тупик', 'линия', 'вал')
+
+def photon_variants(q: str):
+    """«Москва, Бакунинская 72с2» → «Москва, Бакунинская улица 72 с2»: Photon хочет пробел и тип улицы."""
+    a = re.sub(r'(\d+)\s*([ск])\s?(\d+)', r'\1 \2\3', q)
+    yield a
+    tail = a.split(',', 1)[-1].strip()
+    if not any(w in tail.lower() for w in TYPE_WORDS):
+        m = re.match(r'(.*?)(?=\s*\d)', tail)
+        if m and m.group(1).strip():
+            yield 'Москва, ' + m.group(1).strip() + ' улица ' + tail[m.end():].strip()
+
+def geocode(q):
+    if q in cache: return cache[q]
+    g = None
+    for v in photon_variants(q):
+        g = _photon(v)
+        if g: break
+    if not g:  # None (ошибка сети) или {} (не нашли) — пробуем Nominatim
+        g2 = _nominatim(q)
+        if g2 is None: return None  # Nominatim недоступен — не кэшируем, чтобы повторить позже
+        g = g2
+    cache[q] = g or None
     cache_path.write_text(json.dumps(cache, ensure_ascii=False))
     return cache[q]
+
+STATION_COORDS = {}
+def station_coords(metro: str):
+    """Координаты станции — медиана по уже известным лофтам у этой станции (без геокодера)."""
+    if metro in STATION_COORDS: return STATION_COORDS[metro]
+    pts = [(float(r['lat']), float(r['lon'])) for r in rows if r['metro'] == metro and r['lat']]
+    if len(pts) >= 2:
+        lat = sorted(p[0] for p in pts)[len(pts) // 2]; lon = sorted(p[1] for p in pts)[len(pts) // 2]
+        ds = [r['district'] for r in rows if r['metro'] == metro and r['district']]
+        STATION_COORDS[metro] = {'lat': lat, 'lon': lon, 'name': f'м. {metro} (по лофтам)', 'rayon': '', 'src': 'station',
+                                 'district': max(set(ds), key=ds.count) if ds else ''}
+    else:
+        STATION_COORDS[metro] = geocode(f'станция метро {metro}, Москва')
+    return STATION_COORDS[metro]
 
 RAYON = {
  'ЦАО': 'Арбат Басманный Замоскворечье Красносельский Мещанский Пресненский Таганский Тверской Хамовники Якиманка',
@@ -95,7 +171,7 @@ def norm_addr(a: str) -> str:
 
 def simplify(a: str) -> str:
     """Убрать корпус/строение/литеру для второй попытки."""
-    a = re.sub(r'\s*[ск]\s?\d+[А-Яа-яA-Za-z]?\b', '', a)
+    a = re.sub(r'(?<![А-Яа-яA-Za-z])\s*[ск]\s?\d+[А-Яа-яA-Za-z]?\b', '', a)
     a = re.sub(r'(\d+)[А-Яа-я]\b', r'\1', a)
     return a
 
@@ -125,11 +201,11 @@ for c in cands[:limit]:
         a = norm_addr(c['address'])
         g = geocode(a) or geocode(simplify(a))
     if not g and c['metro']:
-        g = geocode(f'станция метро {c["metro"]}, Москва')
+        g = station_coords(re.split(r'[,/;]', c['metro'])[0].strip())
         note = 'координаты по станции метро, адрес не найден; '
     if not g: skipped += 1; print('  no geo:', name, c['address'], c['metro']); continue
     if not (55.3 <= g['lat'] <= 56.1 and 36.8 <= g['lon'] <= 38.2): skipped += 1; print('  outside Moscow:', name); continue
-    d = okrug(g.get('rayon', ''))
+    d = okrug(g.get('rayon', '')) or g.get('district', '')
     if not d: note += f'округ не определён (район: {g.get("rayon","")}); '; d = 'ЦАО'
     base = translit(name) or 'loft'
     slug = base; n = 2

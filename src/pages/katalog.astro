@@ -4,11 +4,13 @@ import LoftCard from '../components/LoftCard.astro';
 import Filters from '../components/Filters.tsx';
 import LeadForm from '../components/LeadForm.astro';
 import { publicLofts } from '../lib/data';
-import { loftsWord } from '../lib/pages';
+import { loftsWord, metroLinks, MAX_CARDS } from '../lib/pages';
+import MetroNav from '../components/MetroNav.astro';
 import { breadcrumbLd, itemListLd } from '../lib/jsonld';
 
 const all = publicLofts();
 const sorted = [...all].sort((a, b) => (a.status === 'verified' ? 0 : 1) - (b.status === 'verified' ? 0 : 1) || (a.price_evening_30 ?? a.price_hour_from ?? 1e9) - (b.price_evening_30 ?? b.price_hour_from ?? 1e9));
+const shown = sorted.slice(0, MAX_CARDS);
 const crumbs = [{ name: 'Лофты Москвы', path: '/' }, { name: 'Весь каталог', path: '/katalog/' }];
 ---
 <Base title={`Все лофты Москвы: ${loftsWord(all.length)} с фильтрами по гостям, метро и цене — LoftMap`}
@@ -17,7 +19,8 @@ const crumbs = [{ name: 'Лофты Москвы', path: '/' }, { name: 'Вес�
   <nav class="text-sm text-ink/60 mb-3"><a href="/" class="hover:text-brick">Лофты Москвы</a> › Весь каталог</nav>
   <h1 class="text-3xl font-bold tracking-tight">Все лофты Москвы</h1>
   <p class="mt-3 text-lg text-ink/80 max-w-3xl">{loftsWord(all.length)} в каталоге. Проверенные — первыми, дальше по цене. Фильтры работают сразу, без перезагрузки.</p>
-  <div class="mt-5"><Filters client:load total={sorted.length} /></div>
-  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{sorted.map((l) => <LoftCard loft={l} />)}</div>
+  <div class="mt-5"><Filters client:load total={shown.length} /></div>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{shown.map((l) => <LoftCard loft={l} />)}</div>
+  <MetroNav total={sorted.length} shown={shown.length} links={metroLinks(sorted)} />
   <div class="mt-10"><LeadForm /></div>
 </Base>
