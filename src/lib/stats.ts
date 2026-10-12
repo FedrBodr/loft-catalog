@@ -9,6 +9,7 @@ export const median = (xs: number[]): number | null => {
 };
 
 const evenings = (ls: Loft[]) => ls.map((l) => l.price_evening_30).filter((x): x is number => x != null);
+const hours = (ls: Loft[]) => ls.map((l) => l.price_hour_from ?? l.price_hour_weekday).filter((x): x is number => x != null && x > 0);
 
 export interface Stats {
   total: number;
@@ -21,6 +22,13 @@ export interface Stats {
   shareOwnCatering: number | null;
   byCapacity: { people: number; count: number; median30: number | null }[];
   byDistrict: { district: string; count: number; median30: number | null }[];
+  /** По заявленным ставкам «от» с сайтов площадок (все лофты, не только verified). */
+  hour: {
+    count: number;
+    median: number | null;
+    byCapacity: { people: number; count: number; median: number | null }[];
+    byDistrict: { district: string; count: number; median: number | null }[];
+  };
 }
 
 export function stats(all: Loft[]): Stats {
@@ -47,5 +55,16 @@ export function stats(all: Loft[]): Stats {
       const ls = v.filter((l) => l.district === district);
       return { district, count: ls.length, median30: median(evenings(ls)) };
     }),
+    hour: (() => {
+      const pub = all.filter((l) => l.status !== 'closed');
+      const withHour = pub.filter((l) => hours([l]).length);
+      const ds = [...new Set(withHour.map((l) => l.district))].sort();
+      return {
+        count: withHour.length,
+        median: median(hours(withHour)),
+        byCapacity: CAPACITIES.map((people) => { const ls = withHour.filter((l) => fitsPeople(l, people)); return { people, count: ls.length, median: median(hours(ls)) }; }),
+        byDistrict: ds.map((district) => { const ls = withHour.filter((l) => l.district === district); return { district, count: ls.length, median: median(hours(ls)) }; }),
+      };
+    })(),
   };
 }

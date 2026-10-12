@@ -12,6 +12,10 @@ describe('stats', () => {
     const s = stats([]);
     expect(s.median30).toBeNull(); expect(s.shareOwnAlcohol).toBeNull(); expect(s.byCapacity[0].median30).toBeNull();
   });
+  it('ставки «от» считаются по всем, включая candidate', () => {
+    const s = stats([mk('a', { price_hour_from: '2000' }), mk('b', { status: 'candidate', price_evening_30: '', price_hour_from: '4000' })]);
+    expect(s.hour.count).toBe(2); expect(s.hour.median).toBe(3000);
+  });
   it('считает только verified и группирует', () => {
     const s = stats([mk('a'), mk('b', { price_evening_30: '60000', district: 'ЮАО', corkage: 'no' }), mk('c', { status: 'candidate', price_evening_30: '' })]);
     expect(s.total).toBe(3); expect(s.verified).toBe(2);

@@ -17,7 +17,7 @@ const serialize = (s: State) => {
 
 function apply(s: State): number {
   let shown = 0;
-  document.querySelectorAll<HTMLElement>('[data-loft]').forEach((el) => {
+  document.querySelectorAll<HTMLElement>('[data-card]').forEach((el) => {
     const d = el.dataset;
     let ok = true;
     if (s.people && Number(d.cap || 0) < Number(s.people)) ok = false;
