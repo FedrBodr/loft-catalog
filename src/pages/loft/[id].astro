@@ -1,0 +1,93 @@
+---
+import Base from '../../layouts/Base.astro';
+import Calculator from '../../components/Calculator.tsx';
+import LeadForm from '../../components/LeadForm.astro';
+import Faq from '../../components/Faq.astro';
+import LoftCard from '../../components/LoftCard.astro';
+import { publicLofts, datesAreFresh, type Loft } from '../../lib/data';
+import { translit } from '../../lib/pages';
+import { venueLd, faqLd, breadcrumbLd } from '../../lib/jsonld';
+import { fmt } from '../../lib/price';
+
+export function getStaticPaths() {
+  return publicLofts().map((l) => ({ params: { id: l.id }, props: { loft: l } }));
+}
+const { loft: l } = Astro.props as { loft: Loft };
+const all = publicLofts();
+const cap = Math.max(l.cap_seated ?? 0, l.cap_standing ?? 0) || null;
+const fresh = datesAreFresh(l);
+const d = (s: string) => s ? s.slice(8, 10) + '.' + s.slice(5, 7) + '.' + s.slice(0, 4) : '';
+const alco = l.corkage ? (l.corkage.kind === 'free' ? 'свой алкоголь можно без сбора' : l.corkage.kind === 'fee' ? `свой алкоголь можно, пробковый сбор ${fmt(l.corkage.fee!)}` : 'свой алкоголь нельзя') : 'условия по алкоголю уточняйте';
+const priceLine = l.price_evening_30 ? `Вечер на 30 человек в декабре обойдётся в ${fmt(l.price_evening_30)} с учётом минимума ${l.min_hours} ч и уборки` : l.price_hour_from ? `Аренда от ${fmt(l.price_hour_from)} в час (данные с сайта площадки, не проверены)` : 'Цена по запросу';
+const answer = `${l.name} — лофт ${cap ? `на ${cap} человек` : ''} у метро ${l.metro[0]}${l.metro_walk_min ? ` (${l.metro_walk_min} мин пешком)` : ''}, ${l.district}. ${priceLine}; ${alco}${l.noise_after_23 ? `; шуметь после 23:00 ${l.noise_after_23 === 'ok' ? 'можно' : l.noise_after_23 === 'quiet' ? 'можно тише' : 'нельзя'}` : ''}.`;
+const nearby = all.filter((o) => o.id !== l.id && o.metro.some((m) => l.metro.includes(m))).slice(0, 3);
+const faq = [
+  { q: `Сколько стоит снять ${l.name} на вечер?`, a: l.price_evening_30 ? `На 30 человек в субботу декабря с 18:00 до 23:00 — ${fmt(l.price_evening_30)}${l.price_evening_50 ? `, на 50 человек — ${fmt(l.price_evening_50)}` : ''}. Минимум ${l.min_hours} ч${l.deposit ? `, залог ${fmt(l.deposit)} возвращается` : ''}.` : 'Проверенной цены пока нет. Ставка «от» взята с сайта площадки; итог зависит от минимума часов и сборов — уточните по телефону.' },
+  { q: `Можно ли свой алкоголь и еду в ${l.name}?`, a: `${alco.charAt(0).toUpperCase() + alco.slice(1)}. ${l.own_catering == null ? 'Про свою еду уточняйте.' : l.own_catering ? 'Своя еда и кейтеринг разрешены.' : 'Своя еда не разрешена, только кейтеринг площадки.'}` },
+  { q: `Как добраться до ${l.name}?`, a: `Адрес: ${l.address}. Ближайшее метро — ${l.metro.join(', ')}${l.metro_walk_min ? `, около ${l.metro_walk_min} минут пешком` : ''}.${l.parking ? ' Есть парковка.' : ''}` },
+];
+const crumbs = [{ name: 'Лофты Москвы', path: '/' }, { name: `м. ${l.metro[0]}`, path: `/metro/${translit(l.metro[0])}/` }, { name: l.name, path: `/loft/${l.id}/` }];
+const title = `${l.name}${cap ? ` — лофт на ${cap} человек` : ''} у м. ${l.metro[0]}${l.price_evening_30 ? `: ${fmt(l.price_evening_30)} за вечер` : ''} — LoftMap`;
+const yes = (b: boolean | null) => b == null ? '—' : b ? 'да' : 'нет';
+---
+<Base title={title} description={answer.slice(0, 300)} jsonLd={[venueLd(l), faqLd(faq), breadcrumbLd(crumbs)]}>
+  <nav class="text-sm text-ink/60 mb-3">{crumbs.map((c, i) => <>{i > 0 && ' › '}<a href={c.path} class="hover:text-brick">{c.name}</a></>)}</nav>
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <h1 class="text-3xl font-bold tracking-tight">{l.name}</h1>
+    {l.status === 'verified'
+      ? <span class="badge bg-green-100 text-green-800">{l.updated_by_loft_at ? `Обновлено лофтом ${d(l.updated_by_loft_at)}` : `Проверено ${d(l.checked_at)}`}</span>
+      : <span class="badge bg-amber-100 text-amber-800">Данные не проверены — цена с сайта площадки</span>}
+  </div>
+  <p class="mt-3 text-lg leading-relaxed max-w-3xl">{answer}</p>
+
+  <div class="mt-5 flex flex-wrap gap-2">
+    {l.phone && <a href={`tel:${l.phone}`} data-track="contact_click" data-loft={l.id} class="btn">{l.phone}</a>}
+    {l.telegram && <a href={`https://t.me/${l.telegram}`} data-track="contact_click" data-loft={l.id} class="btn-ghost" rel="nofollow noopener">Telegram</a>}
+    {l.whatsapp && <a href={`https://wa.me/${l.whatsapp.replace(/\D/g, '')}`} data-track="contact_click" data-loft={l.id} class="btn-ghost" rel="nofollow noopener">WhatsApp</a>}
+    {l.site && <a href={l.site} class="btn-ghost" rel="nofollow noopener" target="_blank">Сайт площадки</a>}
+    {l.has_3d && <a href={l.has_3d} class="btn-ghost" target="_blank" rel="noopener">3D-прогулка</a>}
+  </div>
+
+  <div class="grid lg:grid-cols-[1fr_380px] gap-8 mt-8">
+    <div>
+      {fresh && <section class="mb-6">
+        <h2 class="text-xl font-semibold mb-2">Свободные даты в декабре</h2>
+        <div class="flex flex-wrap gap-2">{l.free_dates_dec.map((x) => <span class="badge bg-green-100 text-green-800 text-sm">{d(x).slice(0, 5)}</span>)}</div>
+        <p class="text-xs text-ink/60 mt-2">По данным площадки на {d(l.checked_at)}. Перед бронированием подтвердите дату у лофта.</p>
+      </section>}
+
+      <h2 class="text-xl font-semibold mb-2">Параметры</h2>
+      <table class="w-full text-sm">
+        <tbody>
+          <tr><td class="py-1.5 pr-3 text-ink/60 w-48">Адрес</td><td>{l.address}</td></tr>
+          <tr><td class="py-1.5 pr-3 text-ink/60">Метро</td><td>{l.metro.join(', ')}{l.metro_walk_min ? `, ${l.metro_walk_min} мин пешком` : ''}</td></tr>
+          {l.area_m2 && <tr><td class="py-1.5 pr-3 text-ink/60">Площадь</td><td>{l.area_m2} м²</td></tr>}
+          {cap && <tr><td class="py-1.5 pr-3 text-ink/60">Вместимость</td><td>{l.cap_seated ? `${l.cap_seated} сидя` : ''}{l.cap_seated && l.cap_standing ? ' / ' : ''}{l.cap_standing ? `${l.cap_standing} стоя` : ''}</td></tr>}
+          {l.min_hours && <tr><td class="py-1.5 pr-3 text-ink/60">Минимум часов</td><td>{l.min_hours}</td></tr>}
+          {(l.price_hour_weekday || l.price_hour_from) && <tr><td class="py-1.5 pr-3 text-ink/60">Ставка в час</td><td>{l.price_hour_weekday ? `${fmt(l.price_hour_weekday)} будни` : `от ${fmt(l.price_hour_from!)}`}{l.price_hour_weekend ? ` / ${fmt(l.price_hour_weekend)} выходные` : ''}</td></tr>}
+          {l.deposit != null && <tr><td class="py-1.5 pr-3 text-ink/60">Залог</td><td>{l.deposit ? fmt(l.deposit) : 'нет'}</td></tr>}
+          {l.cleaning_fee != null && <tr><td class="py-1.5 pr-3 text-ink/60">Уборка</td><td>{l.cleaning_fee ? fmt(l.cleaning_fee) : 'включена'}</td></tr>}
+          {l.corkage && <tr><td class="py-1.5 pr-3 text-ink/60">Свой алкоголь</td><td>{l.corkage.kind === 'free' ? 'да, без сбора' : l.corkage.kind === 'fee' ? `да, сбор ${fmt(l.corkage.fee!)}` : 'нет'}</td></tr>}
+          <tr><td class="py-1.5 pr-3 text-ink/60">Своя еда / кейтеринг</td><td>{yes(l.own_catering)}</td></tr>
+          {l.noise_after_23 && <tr><td class="py-1.5 pr-3 text-ink/60">Шум после 23:00</td><td>{l.noise_after_23 === 'ok' ? 'можно' : l.noise_after_23 === 'quiet' ? 'можно тише' : 'нельзя'}</td></tr>}
+          <tr><td class="py-1.5 pr-3 text-ink/60">Кухня / звук / проектор / парковка</td><td>{yes(l.kitchen)} / {yes(l.sound)} / {yes(l.projector)} / {yes(l.parking)}</td></tr>
+          {l.new_year_surcharge && <tr><td class="py-1.5 pr-3 text-ink/60">Наценка на новогодние даты</td><td>{l.new_year_surcharge}</td></tr>}
+        </tbody>
+      </table>
+      <Faq items={faq} />
+    </div>
+    <aside class="lg:sticky lg:top-4 self-start grid gap-4">
+      <div>
+        <h2 class="text-xl font-semibold mb-2">Итоговая цена</h2>
+        <Calculator client:visible loft={l} />
+      </div>
+      <LeadForm loftId={l.id} compact />
+    </aside>
+  </div>
+
+  {nearby.length > 0 && <section class="mt-10">
+    <h2 class="text-2xl font-semibold mb-3">Рядом, у м. {l.metro[0]}</h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{nearby.map((o) => <LoftCard loft={o} />)}</div>
+  </section>}
+  <p class="mt-8 text-xs text-ink/50">Вы представитель площадки? <a href="/dlya-loftov/" class="text-brick">Обновите карточку</a> — это бесплатно.</p>
+</Base>

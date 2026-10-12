@@ -1,0 +1,48 @@
+---
+interface Props { loftId?: string; compact?: boolean }
+const { loftId = '', compact = false } = Astro.props;
+const endpoint = import.meta.env.PUBLIC_LEAD_ENDPOINT ?? '';
+const tg = import.meta.env.PUBLIC_OWNER_TG ?? 'fedrbodr';
+---
+<form class="rounded-xl border border-ink/10 p-4 grid gap-3" data-lead-form data-endpoint={endpoint} data-tg={tg}>
+  {!compact && <h2 class="text-xl font-semibold">Подобрать лофт под вашу дату</h2>}
+  <p class="text-sm text-ink/70">Пришлём 3–5 вариантов со свободными датами в течение дня. Бесплатно, без посредников — дальше вы общаетесь с площадкой напрямую.</p>
+  <input type="hidden" name="loft" value={loftId} />
+  <input type="text" name="company" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true" />
+  <div class="grid sm:grid-cols-2 gap-3">
+    <label class="text-sm">Гостей<input required type="number" min="1" name="people" class="mt-1 w-full rounded border border-ink/20 px-2 py-1.5" placeholder="30" /></label>
+    <label class="text-sm">Дата<input required type="date" name="date" class="mt-1 w-full rounded border border-ink/20 px-2 py-1.5" /></label>
+    <label class="text-sm">Бюджет на вечер, ₽<input type="number" step="5000" name="budget" class="mt-1 w-full rounded border border-ink/20 px-2 py-1.5" placeholder="60000" /></label>
+    <label class="text-sm">Метро / район<input type="text" name="metro" class="mt-1 w-full rounded border border-ink/20 px-2 py-1.5" placeholder="Курская" /></label>
+  </div>
+  <label class="text-sm">Telegram или телефон для ответа<input required type="text" name="contact" class="mt-1 w-full rounded border border-ink/20 px-2 py-1.5" placeholder="@username или +7…" /></label>
+  <button type="submit" class="btn justify-center">Подобрать</button>
+  <p class="text-xs text-ink/60" data-status></p>
+</form>
+<script is:inline>
+  document.querySelectorAll('[data-lead-form]').forEach((f) => {
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const st = f.querySelector('[data-status]');
+      const fd = new FormData(f);
+      if (fd.get('company')) return;
+      const data = Object.fromEntries(fd.entries());
+      const endpoint = f.dataset.endpoint;
+      const text = `Заявка loftmap.ru\nГостей: ${data.people}\nДата: ${data.date}\nБюджет: ${data.budget || '—'}\nМетро: ${data.metro || '—'}\nКонтакт: ${data.contact}${data.loft ? `\nЛофт: ${data.loft}` : ''}\nСтраница: ${location.href}`;
+      if (endpoint) {
+        try {
+          const r = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...data, page: location.href }) });
+          if (!r.ok) throw new Error(String(r.status));
+          st.textContent = 'Заявка отправлена. Ответим в течение дня.';
+          window.lmTrack && window.lmTrack('generate_lead', { loft: data.loft || '' });
+          f.reset();
+          return;
+        } catch (err) { /* fallthrough to Telegram */ }
+      }
+      const url = `https://t.me/${f.dataset.tg}?text=${encodeURIComponent(text)}`;
+      window.lmTrack && window.lmTrack('generate_lead', { loft: data.loft || '', via: 'tg' });
+      st.innerHTML = `Откроется Telegram с готовым текстом заявки. <a class="text-brick underline" href="${url}" target="_blank" rel="noopener">Открыть вручную</a>`;
+      window.open(url, '_blank');
+    });
+  });
+</script>

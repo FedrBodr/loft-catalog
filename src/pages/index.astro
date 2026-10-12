@@ -1,0 +1,58 @@
+---
+import Base from '../layouts/Base.astro';
+import LoftCard from '../components/LoftCard.astro';
+import Filters from '../components/Filters.tsx';
+import LeadForm from '../components/LeadForm.astro';
+import Faq from '../components/Faq.astro';
+import { publicLofts, verifiedLofts } from '../lib/data';
+import { listPages, loftsWord, byMetro, translit } from '../lib/pages';
+import { stats } from '../lib/stats';
+import { faqLd, orgLd, itemListLd } from '../lib/jsonld';
+import { fmt } from '../lib/price';
+
+const all = publicLofts();
+const v = verifiedLofts();
+const s = stats(all);
+const pages = listPages(all);
+const metroPages = pages.filter((p) => p.path.startsWith('/metro/')).sort((a, b) => b.lofts.length - a.lofts.length).slice(0, 24);
+const capPages = pages.filter((p) => /^\/na\/\d+-chelovek\/$/.test(p.path));
+const sorted = [...v].sort((a, b) => (a.price_evening_30 ?? 1e9) - (b.price_evening_30 ?? 1e9)).concat(all.filter((l) => l.status !== 'verified'));
+
+const faq = [
+  { q: 'Сколько стоит снять лофт в Москве на вечер?', a: s.median30 ? `По ${s.verified} проверенным площадкам медианная цена вечера на 30 человек в декабре — ${fmt(s.median30)} (от ${fmt(s.min30!)} до ${fmt(s.max30!)}), включая минимум часов и уборку. Залог в среднем ${s.medianDeposit ? fmt(s.medianDeposit) : 'отдельно'}.` : 'Цены собираем по каждой площадке с учётом минимума часов, уборки и залога. Смотрите карточку лофта.' },
+  { q: 'Можно ли приносить свой алкоголь и еду?', a: s.shareOwnAlcohol != null ? `Из проверенных лофтов ${s.shareOwnAlcohol}% разрешают свой алкоголь (часть — с пробковым сбором), ${s.shareOwnCatering ?? '—'}% — свою еду или кейтеринг. Условие указано в каждой карточке.` : 'В каждой карточке указано, разрешён ли свой алкоголь, есть ли пробковый сбор и можно ли свою еду.' },
+  { q: 'Берёт ли LoftMap комиссию?', a: 'Нет. Контакты площадки открыты, вы договариваетесь напрямую. Платных размещений нет, лофты в выдаче отсортированы по цене и свежести данных.' },
+  { q: 'Откуда данные и насколько они свежие?', a: 'Базовые данные — из открытых источников. Пометка «Проверено» означает, что мы связались с площадкой и записали цены и свободные даты; дата проверки указана в карточке. Лофт может обновить карточку сам.' },
+];
+---
+<Base title={`Лофты Москвы: ${loftsWord(s.total)}, реальная цена за вечер и свободные даты — LoftMap`}
+      description={`Каталог всех лофтов Москвы без комиссии: ${loftsWord(s.total)}, из них ${s.verified} проверенных — с итоговой ценой за вечер, свободными датами и прямыми контактами.`}
+      jsonLd={[orgLd(), faqLd(faq), itemListLd('Лофты Москвы', sorted)]}>
+  <section class="py-6">
+    <h1 class="text-3xl sm:text-4xl font-bold tracking-tight">Все лофты Москвы. Реальная цена за вечер и свободные даты.</h1>
+    <p class="mt-3 text-lg text-ink/80 max-w-3xl">
+      {loftsWord(s.total)} в каталоге, {s.verified} проверены лично: итоговая цена с минимумом часов и уборкой, свой алкоголь, шум после 23:00, свободные даты декабря. Без комиссии — контакты площадок открыты.
+    </p>
+    <div class="mt-4 flex flex-wrap gap-2">
+      <a href="/korporativ/" class="btn">Лофты на корпоратив</a>
+      <a href="/ceny/korporativ-2026/" class="btn-ghost">Сколько стоит вечер в лофте</a>
+    </div>
+  </section>
+
+  <Filters client:load total={sorted.length} />
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {sorted.map((l) => <LoftCard loft={l} />)}
+  </div>
+
+  {metroPages.length > 0 && <section class="mt-10">
+    <h2 class="text-2xl font-semibold mb-3">Лофты у метро</h2>
+    <div class="flex flex-wrap gap-2">{metroPages.map((p) => <a href={p.path} class="badge bg-sand hover:bg-brick hover:text-white">{p.h1.replace('Лофты у метро ', '')} · {p.lofts.length}</a>)}</div>
+  </section>}
+  {capPages.length > 0 && <section class="mt-6">
+    <h2 class="text-2xl font-semibold mb-3">По количеству гостей</h2>
+    <div class="flex flex-wrap gap-2">{capPages.map((p) => <a href={p.path} class="badge bg-sand hover:bg-brick hover:text-white">{p.h1.replace(' в Москве', '')} · {p.lofts.length}</a>)}</div>
+  </section>}
+
+  <div class="mt-10"><LeadForm /></div>
+  <Faq items={faq} />
+</Base>

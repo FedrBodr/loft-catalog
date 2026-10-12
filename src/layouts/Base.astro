@@ -1,0 +1,86 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  canonical?: string;
+  noindex?: boolean;
+  jsonLd?: unknown[];
+}
+const { title, description, noindex = false, jsonLd = [] } = Astro.props;
+const canonical = Astro.props.canonical ?? new URL(Astro.url.pathname, Astro.site).href;
+const GA = import.meta.env.PUBLIC_GA_ID;
+const YM = import.meta.env.PUBLIC_YM_ID;
+const built = new Date().toISOString().slice(0, 10);
+---
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:site_name" content="LoftMap" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {jsonLd.map((obj) => <script type="application/ld+json" set:html={JSON.stringify(obj)} />)}
+    {GA && (
+      <>
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA}`}></script>
+        <script is:inline define:vars={{ GA }}>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', GA);
+          window.lmTrack = (name, params) => { try { gtag('event', name, params || {}); } catch (e) {} if (window.ym && window.lmYM) { try { ym(window.lmYM, 'reachGoal', name); } catch (e) {} } };
+        </script>
+      </>
+    )}
+    {!GA && <script is:inline>window.lmTrack = (name) => { if (window.ym && window.lmYM) { try { ym(window.lmYM, 'reachGoal', name); } catch (e) {} } };</script>}
+    {YM && (
+      <script is:inline define:vars={{ YM }}>
+        window.lmYM = Number(YM);
+        (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,"script","https://mc.yandex.ru/metrika/tag.js","ym");
+        ym(window.lmYM, "init", { clickmap:true, trackLinks:true, accurateTrackBounce:true });
+      </script>
+    )}
+  </head>
+  <body>
+    <header class="border-b border-ink/10">
+      <div class="container flex items-center justify-between py-3">
+        <a href="/" class="text-xl font-bold tracking-tight">Loft<span class="text-brick">Map</span></a>
+        <nav class="flex gap-4 text-sm">
+          <a href="/korporativ/" class="hover:text-brick">Корпоратив</a>
+          <a href="/ceny/korporativ-2026/" class="hover:text-brick hidden sm:inline">Цены</a>
+          <a href="/dlya-loftov/" class="hover:text-brick">Лофтам</a>
+        </nav>
+      </div>
+    </header>
+    <main class="container py-6">
+      <slot />
+    </main>
+    <footer class="border-t border-ink/10 mt-12">
+      <div class="container py-6 text-sm text-ink/60 flex flex-wrap gap-x-6 gap-y-2">
+        <span>© LoftMap, 2026. Каталог лофтов Москвы без комиссии.</span>
+        <a href="/o-proekte/" class="hover:text-brick">О проекте</a>
+        <a href="/dlya-loftov/" class="hover:text-brick">Разместить лофт</a>
+        <a href="/data/lofts.json" class="hover:text-brick">Открытые данные</a>
+        <span>Сборка: {built}</span>
+      </div>
+    </footer>
+    <script is:inline>
+      document.addEventListener('click', (e) => {
+        const a = e.target.closest('a[data-track]');
+        if (a && window.lmTrack) window.lmTrack(a.dataset.track, { loft: a.dataset.loft || '' });
+      });
+    </script>
+  </body>
+</html>

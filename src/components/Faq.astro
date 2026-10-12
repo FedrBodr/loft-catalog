@@ -1,0 +1,15 @@
+---
+interface Props { items: { q: string; a: string }[]; title?: string }
+const { items, title = 'Частые вопросы' } = Astro.props;
+---
+<section class="mt-10">
+  <h2 class="text-2xl font-semibold mb-4">{title}</h2>
+  <dl class="grid gap-4">
+    {items.map((i) => (
+      <div class="rounded-xl border border-ink/10 p-4">
+        <dt class="font-semibold">{i.q}</dt>
+        <dd class="mt-1 text-ink/80 leading-relaxed" set:html={i.a} />
+      </div>
+    ))}
+  </dl>
+</section>

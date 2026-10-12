@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /edit/
+
+Sitemap: https://loftmap.ru/sitemap-index.xml

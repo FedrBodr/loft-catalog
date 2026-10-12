@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #1a1a1a;
+  --color-brick: #b5472f;
+  --color-sand: #f4efe8;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body { @apply bg-white text-ink font-sans antialiased; }
+.container { @apply mx-auto max-w-6xl px-4; }
+.btn { @apply inline-flex items-center gap-2 rounded-lg bg-brick px-4 py-2.5 text-white font-medium hover:bg-[#9c3b26] transition; }
+.btn-ghost { @apply inline-flex items-center gap-2 rounded-lg border border-ink/20 px-4 py-2.5 font-medium hover:bg-sand transition; }
+.card { @apply rounded-xl border border-ink/10 bg-white p-4 hover:shadow-md transition; }
+.badge { @apply inline-block rounded-full px-2.5 py-0.5 text-xs font-medium; }
+.prose-tight h2 { @apply mt-8 mb-3 text-2xl font-semibold; }
+.prose-tight h3 { @apply mt-6 mb-2 text-xl font-semibold; }
+.prose-tight p { @apply my-3 leading-relaxed; }
+.prose-tight table { @apply my-4 w-full text-sm; }
+.prose-tight th { @apply text-left border-b border-ink/20 py-2 pr-3 font-semibold; }
+.prose-tight td { @apply border-b border-ink/10 py-2 pr-3 align-top; }
+.prose-tight a { @apply text-brick underline-offset-2 hover:underline; }
