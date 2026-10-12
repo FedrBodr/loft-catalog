@@ -29,7 +29,7 @@ const d = (s: string) => s.slice(8, 10) + '.' + s.slice(5, 7);
   <dl class="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
     {cap && <><dt class="text-ink/60">Вместимость</dt><dd>до {cap} чел{l.cap_seated ? ` (${l.cap_seated} сидя)` : ''}</dd></>}
     {l.price_evening_30
-      ? <><dt class="text-ink/60">Вечер на 30 чел</dt><dd class="font-semibold">{fmt(l.price_evening_30)}</dd></>
+      ? <><dt class="text-ink/60">Вечер на 20 чел</dt><dd class="font-semibold">{fmt(l.price_evening_30)}</dd></>
       : l.price_hour_from ? <><dt class="text-ink/60">Цена</dt><dd>от {fmt(l.price_hour_from)}/час</dd></> : null}
     {l.corkage && <><dt class="text-ink/60">Свой алкоголь</dt><dd>{l.corkage.kind === 'free' ? 'да, бесплатно' : l.corkage.kind === 'fee' ? `да, сбор ${fmt(l.corkage.fee!)}` : 'нет'}</dd></>}
     {l.own_catering != null && <><dt class="text-ink/60">Своя еда</dt><dd>{l.own_catering ? 'да' : 'нет'}</dd></>}

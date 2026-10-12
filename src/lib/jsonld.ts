@@ -55,7 +55,7 @@ export const datasetLd = (built: string, n: number) => ({
   '@context': 'https://schema.org',
   '@type': 'Dataset',
   name: 'Лофты Москвы: цены за вечер, вместимость, условия',
-  description: `Открытый набор данных о ${n} лофтах Москвы: адрес, метро, вместимость, цена за вечер на 30 человек, минимум часов, залог, условия по алкоголю и кейтерингу.`,
+  description: `Открытый набор данных о ${n} лофтах Москвы: адрес, метро, вместимость, цена за вечер на 20 человек, минимум часов, залог, условия по алкоголю и кейтерингу.`,
   url: `${SITE}/ceny/korporativ-2026/`,
   license: 'https://creativecommons.org/licenses/by/4.0/',
   creator: { '@type': 'Organization', name: 'LoftMap', url: SITE },

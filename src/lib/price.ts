@@ -16,7 +16,7 @@ export interface Estimate {
   hours: number;
 }
 
-export const DEFAULT_QUERY: Query = { people: 30, hours: 5, weekend: true, december: true, ownAlcohol: true };
+export const DEFAULT_QUERY: Query = { people: 20, hours: 5, weekend: true, december: true, ownAlcohol: true };
 
 /** Парсит «+30%» → 1.3; пусто/«нет» → 1. */
 export function surchargeFactor(s: string): number {
