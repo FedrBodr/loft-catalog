@@ -104,8 +104,10 @@ def translit(s):
     s = ''.join(t.get(c, c) for c in s.lower())
     return re.sub(r'-+', '-', re.sub(r'[^a-z0-9]+', '-', s)).strip('-')[:60]
 
-rows = list(csv.DictReader(CSV.open(encoding='utf-8')))
-fields = list(rows[0].keys()) if rows else None
+with CSV.open(encoding='utf-8') as _f:
+    _reader = csv.DictReader(_f)
+    rows = list(_reader)
+    fields = _reader.fieldnames
 ids = {r['id'] for r in rows}
 addr_names = {(norm_addr(r['address']).lower(), r['name'].lower()[:12]) for r in rows}
 phones = {(r['phone'], r['name'].lower()[:12]) for r in rows if r['phone']}
