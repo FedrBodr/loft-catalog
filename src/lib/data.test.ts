@@ -16,6 +16,10 @@ describe('validateLofts', () => {
   it('дубль id — ошибка', () => expect(validateLofts([ok, ok]).join()).toContain('дубль id'));
   it('координаты вне Москвы — ошибка', () => expect(validateLofts([{ ...ok, lat: '59.9', lon: '30.3' }]).join()).toContain('вне Москвы'));
   it('нет контакта — ошибка', () => expect(validateLofts([{ ...ok, phone: '' }]).join()).toContain('phone или telegram'));
+  it('candidate с одним site проходит, verified — нет', () => {
+    expect(validateLofts([{ ...ok, phone: '', site: 'https://x.ru' }])).toEqual([]);
+    expect(validateLofts([{ ...ok, status: 'verified', phone: '', site: 'https://x.ru' }]).join()).toContain('phone или telegram');
+  });
   it('кривой corkage — ошибка', () => expect(validateLofts([{ ...ok, corkage: 'maybe' }]).join()).toContain('corkage'));
 });
 

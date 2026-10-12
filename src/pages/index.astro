@@ -16,7 +16,8 @@ const s = stats(all);
 const pages = listPages(all);
 const metroPages = pages.filter((p) => p.path.startsWith('/metro/')).sort((a, b) => b.lofts.length - a.lofts.length).slice(0, 24);
 const capPages = pages.filter((p) => /^\/na\/\d+-chelovek\/$/.test(p.path));
-const sorted = [...v].sort((a, b) => (a.price_evening_30 ?? 1e9) - (b.price_evening_30 ?? 1e9)).concat(all.filter((l) => l.status !== 'verified'));
+const sortedAll = [...v].sort((a, b) => (a.price_evening_30 ?? 1e9) - (b.price_evening_30 ?? 1e9)).concat(all.filter((l) => l.status !== 'verified').sort((a, b) => (a.price_hour_from ?? 1e9) - (b.price_hour_from ?? 1e9)));
+const sorted = sortedAll.slice(0, 48);
 
 const faq = [
   { q: 'Сколько стоит снять лофт в Москве на вечер?', a: s.median30 ? `По ${s.verified} проверенным площадкам медианная цена вечера на 30 человек в декабре — ${fmt(s.median30)} (от ${fmt(s.min30!)} до ${fmt(s.max30!)}), включая минимум часов и уборку. Залог в среднем ${s.medianDeposit ? fmt(s.medianDeposit) : 'отдельно'}.` : 'Цены собираем по каждой площадке с учётом минимума часов, уборки и залога. Смотрите карточку лофта.' },
@@ -27,7 +28,7 @@ const faq = [
 ---
 <Base title={`Лофты Москвы: ${loftsWord(s.total)}, реальная цена за вечер и свободные даты — LoftMap`}
       description={`Каталог всех лофтов Москвы без комиссии: ${loftsWord(s.total)}, из них ${s.verified} проверенных — с итоговой ценой за вечер, свободными датами и прямыми контактами.`}
-      jsonLd={[orgLd(), faqLd(faq), itemListLd('Лофты Москвы', sorted)]}>
+      jsonLd={[orgLd(), faqLd(faq), itemListLd('Лофты Москвы', sortedAll)]}>
   <section class="py-6">
     <h1 class="text-3xl sm:text-4xl font-bold tracking-tight">Все лофты Москвы. Реальная цена за вечер и свободные даты.</h1>
     <p class="mt-3 text-lg text-ink/80 max-w-3xl">
@@ -43,6 +44,7 @@ const faq = [
   <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
     {sorted.map((l) => <LoftCard loft={l} />)}
   </div>
+  {sortedAll.length > sorted.length && <p class="mt-6 text-center"><a href="/katalog/" class="btn-ghost">Все {loftsWord(sortedAll.length)} с фильтрами →</a></p>}
 
   {metroPages.length > 0 && <section class="mt-10">
     <h2 class="text-2xl font-semibold mb-3">Лофты у метро</h2>

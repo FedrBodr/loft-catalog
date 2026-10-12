@@ -143,7 +143,7 @@ export function validateLofts(rows: RawRow[]): string[] {
       errors.push(`${where} координаты вне Москвы: ${r.lat},${r.lon}`);
     if (list(r.metro).length === 0) errors.push(`${where} нет metro`);
     if (!r.district?.trim()) errors.push(`${where} нет district`);
-    if (!r.phone?.trim() && !r.telegram?.trim()) errors.push(`${where} нужен phone или telegram`);
+    if (!r.phone?.trim() && !r.telegram?.trim() && !(r.status?.trim() === 'candidate' && r.site?.trim())) errors.push(`${where} нужен phone или telegram (candidate — хотя бы site)`);
     if (!r.source?.trim()) errors.push(`${where} нет source`);
     if (r.corkage?.trim() && !parseCorkage(r.corkage)) errors.push(`${where} corkage: free|no|fee:<₽>`);
     for (const d of list(r.free_dates_dec)) if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) errors.push(`${where} free_dates_dec: дата ${d} не YYYY-MM-DD`);
