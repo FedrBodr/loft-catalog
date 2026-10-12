@@ -20,6 +20,17 @@ def num(s):
     s = re.sub(r'[^\d]', '', s or '')
     return int(s) if s else None
 
+def short_name(name: str) -> str:
+    """Убирает рекламный хвост: «ЗЕФИРКА - яркий лофт с фотозонами. Топ-сервис!» → «ЗЕФИРКА»."""
+    n = html.unescape(name).strip()
+    for sep in (' - ', ' – ', ' — ', ' | '):
+        head = n.split(sep)[0].strip()
+        if len(head) >= 3 and len(head) < len(n): n = head; break
+    n = re.split(r'[.!]\s', n)[0].strip(' .!')
+    n = re.sub(r'^(Лофт|лофт)\s+["«]?(.+?)["»]?\s+(для|на|с|у)\s.*$', r'Лофт \2', n)
+    if len(n) > 60: n = n[:60].rsplit(' ', 1)[0]
+    return n
+
 def norm_phone(p: str):
     d = re.sub(r'\D', '', p or '')
     if len(d) == 11 and d[0] in '78': return '+7' + d[1:]
@@ -32,7 +43,7 @@ def parse_l2r(path: Path):
     if not m: return None
     name = clean(m.group(1))
     name = re.split(r'\s*/\s*', name)[0].strip()  # «ROYAL - Курская / РОЯЛЬ» → «ROYAL - Курская»
-    name = re.sub(r'\s*-\s*[А-ЯЁ][а-яё\s]+$', '', name).strip() or name  # убрать « - Курская»
+    name = short_name(name)
     addr = re.search(r'itemprop="streetAddress">\s*(.*?)</span>', s, re.S)
     addr = clean(addr.group(1)) if addr else ''
     metro = re.search(r'metro\.svg[^>]*>\s*</span>\s*([^<]+?)\s*(?:<|$)', s, re.S)
@@ -59,7 +70,7 @@ def parse_deli(products):
     rows = []
     for p in products:
         d = p.get('description', '') or ''
-        name = p.get('name', '').strip()
+        name = short_name(p.get('name', '').strip())
         area = re.search(r'площадью\s*(\d+)\s*м', d)
         cap = re.search(r'вместимостью до\s*(\d+)', d)
         # «по адресу: метро Тульская Новоданиловская наб. Аренда…» — станция, затем улица с типом
