@@ -28,6 +28,12 @@ Document: analytics-search
   известных лофтов у этой станции (236 карточек, пометка в notes). Метро для 126 карточек
   без станции проставлено по ближайшему лофту (`scripts/import/fill_metro.py`, радиус
   1,2 км). У 42 карточек округ не определён → ЦАО с пометкой.
+- Ключи API (локально, `~/.config/fedrbodr/`): 2ГИС демо-ключ `2gis.key` (Places +
+  Geocoder, 1 000 запросов/мес каждый, до 2026-11-11, кабинет platform.2gis.ru, workspace
+  loftmap.ru); Яндекс Геокодер `yandex-geocoder.key` (бесплатный тариф, кабинет
+  yandex.ru/maps-api/console) — на 2026-10-12 ключ ещё отвечал «Invalid api key».
+  `scripts/import/regeocode_2gis.py` уточнил координаты/округ у 240 карточек, которые
+  стояли на станции метро; осталось 17 приблизительных и 24 без округа.
 - Скрипты: `scripts/import/parse_sources.py` (HTML → candidates.json, карта URL
   `l2r/urls.txt`), `build_candidates.py` (геокодинг, дедуп, запись в CSV),
   `fill_metro.py`. Сырые страницы и кэш геокодера — в scratchpad, не в репо.
