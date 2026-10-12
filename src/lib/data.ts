@@ -191,6 +191,9 @@ export function mergeUpdates(rows: RawRow[], updates: Update[], warn: (m: string
   return [...byId.values()];
 }
 
+/** У непроверенной карточки показываем только факты о бизнесе: ставку «от» с агрегатора не публикуем. */
+export const stripUnverified = (l: Loft): Loft => (l.status === 'verified' ? l : { ...l, price_hour_from: null });
+
 const ROOT = process.cwd();
 
 let cache: Loft[] | null = null;
@@ -199,7 +202,7 @@ export function loadLofts(): Loft[] {
   const rows = mergeUpdates(readCsv(join(ROOT, 'data/lofts.csv')), readUpdates(join(ROOT, 'data/updates')));
   const errors = validateLofts(rows);
   if (errors.length) throw new Error('Ошибки в data/lofts.csv:\n' + errors.join('\n'));
-  cache = rows.map(rowToLoft);
+  cache = rows.map(rowToLoft).map(stripUnverified);
   return cache;
 }
 

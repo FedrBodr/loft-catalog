@@ -5,6 +5,10 @@ export const MIN_PER_PAGE = 4;
 /** Комбинации «задача × метро» и «вместимость × метро» — почти дубли страниц метро, пока
  *  нет проверенных данных не генерируем (риск фильтра за тонкий/дублирующий контент). */
 export const COMBO_PAGES = false;
+/** Списочная страница открыта для индекса, только если в ней столько проверенных лофтов (стратегия 12.10). */
+export const INDEX_MIN_VERIFIED = 8;
+export const loftIndexable = (l: Loft) => l.status === 'verified';
+export const listIndexable = (ls: Loft[]) => ls.filter(loftIndexable).length >= INDEX_MIN_VERIFIED;
 /** Больше карточек на одной странице не рендерим: ~1 КБ на карточку, дальше — ссылки на метро. */
 export const MAX_CARDS = 240;
 
@@ -49,6 +53,7 @@ export interface ListPage {
   crumbs: { name: string; path: string }[];
   /** noindex,follow: страница есть для навигации, но в индекс и sitemap не идёт. */
   noindex?: boolean;
+  indexable: boolean;
 }
 
 function titleFor(where: string, ls: Loft[], people?: number): { title: string; description: string } {
@@ -75,7 +80,7 @@ export const byMetro = (ls: Loft[]) => {
 
 /** Все списочные страницы, которые нужно сгенерировать. Правило ≥ MIN_PER_PAGE лофтов. */
 export function listPages(all: Loft[]): ListPage[] {
-  const pages: ListPage[] = [];
+  const pages: Omit<ListPage, 'indexable'>[] = [];
   const home = { name: 'Лофты Москвы', path: '/' };
   const enough = (ls: Loft[]) => ls.length >= MIN_PER_PAGE;
 
@@ -121,5 +126,13 @@ export function listPages(all: Loft[]): ListPage[] {
   feature('/so-svoim-alkogolem/', 'Лофты со своим алкоголем', 'со своим алкоголем в Москве', (l) => l.corkage?.kind === 'free' || l.corkage?.kind === 'fee');
   feature('/so-svoim-keyteringom/', 'Лофты со своим кейтерингом', 'со своей едой и кейтерингом в Москве', (l) => l.own_catering === true);
   feature('/bez-zaloga/', 'Лофты без залога', 'без залога в Москве', (l) => l.status === 'verified' && !l.deposit);
-  return pages;
+  return pages.map((p) => ({ ...p, indexable: !p.noindex && listIndexable(p.lofts) }));
+}
+
+/** Пути страниц с noindex: непроверенные карточки и списки без INDEX_MIN_VERIFIED проверенных. Для sitemap. */
+export function noindexPaths(all: Loft[]): Set<string> {
+  return new Set([
+    ...all.filter((l) => !loftIndexable(l)).map((l) => `/loft/${l.id}/`),
+    ...listPages(all).filter((p) => !p.indexable).map((p) => p.path),
+  ]);
 }

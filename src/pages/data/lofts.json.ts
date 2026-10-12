@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
-import { publicLofts } from '../../lib/data';
+import { verifiedLofts } from '../../lib/data';
 
-// Публичная выгрузка: без notes и служебных полей. edit_token в Loft отсутствует by design.
+// Публичная выгрузка: только проверенные лофты (данные, полученные от самих площадок), без notes.
+// edit_token в Loft отсутствует by design.
 export const GET: APIRoute = () => {
-  const lofts = publicLofts().map(({ notes, ...rest }) => rest);
+  const lofts = verifiedLofts().map(({ notes, ...rest }) => rest);
   const body = {
     source: 'https://loftmap.ru',
     license: 'CC BY 4.0',

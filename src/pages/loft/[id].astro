@@ -5,7 +5,7 @@ import LeadForm from '../../components/LeadForm.astro';
 import Faq from '../../components/Faq.astro';
 import LoftCard from '../../components/LoftCard.astro';
 import { publicLofts, datesAreFresh, type Loft } from '../../lib/data';
-import { translit } from '../../lib/pages';
+import { translit, loftIndexable } from '../../lib/pages';
 import { venueLd, faqLd, breadcrumbLd } from '../../lib/jsonld';
 import { fmt } from '../../lib/price';
 
@@ -18,11 +18,11 @@ const cap = Math.max(l.cap_seated ?? 0, l.cap_standing ?? 0) || null;
 const fresh = datesAreFresh(l);
 const d = (s: string) => s ? s.slice(8, 10) + '.' + s.slice(5, 7) + '.' + s.slice(0, 4) : '';
 const alco = l.corkage ? (l.corkage.kind === 'free' ? 'свой алкоголь можно без сбора' : l.corkage.kind === 'fee' ? `свой алкоголь можно, пробковый сбор ${fmt(l.corkage.fee!)}` : 'свой алкоголь нельзя') : 'условия по алкоголю уточняйте';
-const priceLine = l.price_evening_30 ? `Вечер на 30 человек в декабре обойдётся в ${fmt(l.price_evening_30)} с учётом минимума ${l.min_hours} ч и уборки` : l.price_hour_from ? `Аренда от ${fmt(l.price_hour_from)} в час (данные с сайта площадки, не проверены)` : 'Цена по запросу';
+const priceLine = l.price_evening_30 ? `Вечер на 30 человек в декабре обойдётся в ${fmt(l.price_evening_30)} с учётом минимума ${l.min_hours} ч и уборки` : 'Цена пока не проверена — уточните у площадки';
 const answer = `${l.name} — лофт ${cap ? `на ${cap} человек` : ''} у метро ${l.metro[0]}${l.metro_walk_min ? ` (${l.metro_walk_min} мин пешком)` : ''}, ${l.district}. ${priceLine}; ${alco}${l.noise_after_23 ? `; шуметь после 23:00 ${l.noise_after_23 === 'ok' ? 'можно' : l.noise_after_23 === 'quiet' ? 'можно тише' : 'нельзя'}` : ''}.`;
 const nearby = all.filter((o) => o.id !== l.id && o.metro.some((m) => l.metro.includes(m))).slice(0, 3);
 const faq = [
-  { q: `Сколько стоит снять ${l.name} на вечер?`, a: l.price_evening_30 ? `На 30 человек в субботу декабря с 18:00 до 23:00 — ${fmt(l.price_evening_30)}${l.price_evening_50 ? `, на 50 человек — ${fmt(l.price_evening_50)}` : ''}. Минимум ${l.min_hours} ч${l.deposit ? `, залог ${fmt(l.deposit)} возвращается` : ''}.` : 'Проверенной цены пока нет. Ставка «от» взята с сайта площадки; итог зависит от минимума часов и сборов — уточните по телефону.' },
+  { q: `Сколько стоит снять ${l.name} на вечер?`, a: l.price_evening_30 ? `На 30 человек в субботу декабря с 18:00 до 23:00 — ${fmt(l.price_evening_30)}${l.price_evening_50 ? `, на 50 человек — ${fmt(l.price_evening_50)}` : ''}. Минимум ${l.min_hours} ч${l.deposit ? `, залог ${fmt(l.deposit)} возвращается` : ''}.` : 'Проверенной цены пока нет: итог зависит от минимума часов и сборов, уточните у площадки по телефону.' },
   { q: `Можно ли свой алкоголь и еду в ${l.name}?`, a: `${alco.charAt(0).toUpperCase() + alco.slice(1)}. ${l.own_catering == null ? 'Про свою еду уточняйте.' : l.own_catering ? 'Своя еда и кейтеринг разрешены.' : 'Своя еда не разрешена, только кейтеринг площадки.'}` },
   { q: `Как добраться до ${l.name}?`, a: `Адрес: ${l.address}. Ближайшее метро — ${l.metro.join(', ')}${l.metro_walk_min ? `, около ${l.metro_walk_min} минут пешком` : ''}.${l.parking ? ' Есть парковка.' : ''}` },
 ];
@@ -30,13 +30,13 @@ const crumbs = [{ name: 'Лофты Москвы', path: '/' }, { name: `м. ${l
 const title = `${l.name}${cap ? ` — лофт на ${cap} человек` : ''} у м. ${l.metro[0]}${l.price_evening_30 ? `: ${fmt(l.price_evening_30)} за вечер` : ''} — LoftMap`;
 const yes = (b: boolean | null) => b == null ? '—' : b ? 'да' : 'нет';
 ---
-<Base title={title} description={answer.slice(0, 300)} jsonLd={[venueLd(l), faqLd(faq), breadcrumbLd(crumbs)]}>
+<Base title={title} description={answer.slice(0, 300)} noindex={!loftIndexable(l)} jsonLd={[venueLd(l), faqLd(faq), breadcrumbLd(crumbs)]}>
   <nav class="text-sm text-ink/60 mb-3">{crumbs.map((c, i) => <>{i > 0 && ' › '}<a href={c.path} class="hover:text-brick">{c.name}</a></>)}</nav>
   <div class="flex flex-wrap items-start justify-between gap-3">
     <h1 class="text-3xl font-bold tracking-tight">{l.name}</h1>
     {l.status === 'verified'
       ? <span class="badge bg-green-100 text-green-800">{l.updated_by_loft_at ? `Обновлено лофтом ${d(l.updated_by_loft_at)}` : `Проверено ${d(l.checked_at)}`}</span>
-      : <span class="badge bg-amber-100 text-amber-800">Данные не проверены — цена с сайта площадки</span>}
+      : <span class="badge bg-amber-100 text-amber-800">Данные не проверены</span>}
   </div>
   <p class="mt-3 text-lg leading-relaxed max-w-3xl">{answer}</p>
 

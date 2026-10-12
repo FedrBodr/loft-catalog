@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { listPages, translit, loftsWord } from './pages';
-import { rowToLoft } from './data';
+import { listPages, translit, loftsWord, noindexPaths, INDEX_MIN_VERIFIED } from './pages';
+import { rowToLoft, stripUnverified } from './data';
 
 const mk = (id: string, metro: string, extra: Record<string, string> = {}) =>
   rowToLoft({ id, name: id, status: 'verified', address: 'a', lat: '55.75', lon: '37.6', metro, district: 'ЦАО', phone: '1', source: 'demo',
@@ -29,6 +29,26 @@ describe('listPages', () => {
   it('все пути латиницей со слешем', () => {
     const ls = [mk('a', 'Чкаловская'), mk('b', 'Чкаловская'), mk('c', 'Чкаловская'), mk('d', 'Чкаловская')];
     for (const p of listPages(ls)) expect(p.path).toMatch(/^\/[a-z0-9\-\/]+\/$/);
+  });
+});
+
+describe('индексация', () => {
+  const cand = (id: string) => mk(id, 'Курская', { status: 'candidate', price_hour_from: '3000' });
+  it('список индексируется только при INDEX_MIN_VERIFIED проверенных', () => {
+    const few = [...Array.from({ length: INDEX_MIN_VERIFIED - 1 }, (_, i) => mk(`v${i}`, 'Курская')), cand('c1'), cand('c2')];
+    expect(listPages(few).find((p) => p.path === '/metro/kurskaya/')!.indexable).toBe(false);
+    const enough = [...few, mk('v-last', 'Курская')];
+    expect(listPages(enough).find((p) => p.path === '/metro/kurskaya/')!.indexable).toBe(true);
+  });
+  it('noindexPaths содержит непроверенные карточки и закрытые списки, но не проверенные карточки', () => {
+    const hidden = noindexPaths([mk('v1', 'Курская'), cand('c1'), cand('c2'), cand('c3')]);
+    expect(hidden.has('/loft/c1/')).toBe(true);
+    expect(hidden.has('/loft/v1/')).toBe(false);
+    expect(hidden.has('/metro/kurskaya/')).toBe(true);
+  });
+  it('у непроверенной карточки нет ставки агрегатора, у проверенной остаётся', () => {
+    expect(stripUnverified(cand('c1')).price_hour_from).toBeNull();
+    expect(stripUnverified(mk('v1', 'Курская', { price_hour_from: '3000' })).price_hour_from).toBe(3000);
   });
 });
 
