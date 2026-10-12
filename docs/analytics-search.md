@@ -12,10 +12,21 @@ Document: analytics-search
   (`public/CNAME`, настройка Pages `cname=loftmap.ru`).
 - DNS на reg.ru (ns1/ns2.reg.ru): A `@` → 185.199.108/109/110/111.153; CNAME `www` →
   `fedrbodr.github.io`; TXT `@` google-site-verification (DNS-подтверждение домена).
-- Домен зарегистрирован 2026-10-12 01:31 UTC; на 02:40 UTC ещё не опубликован в зоне
-  `.ru` (ждём делегирования). После появления: включить `https_enforced` в Pages
-  (`gh api -X PUT repos/FedrBodr/loft-catalog/pages -F https_enforced=true`), проверить
-  `curl -I https://loftmap.ru/`.
+- Домен зарегистрирован 2026-10-12 01:31 UTC, делегирован в `.ru` ~03:20 UTC; HTTP
+  работает. HTTPS: сертификат GitHub выпускает после делегирования; `https_enforced`
+  включить, когда `curl -I https://loftmap.ru/` ответит 200
+  (`gh api -X PUT repos/FedrBodr/loft-catalog/pages -F https_enforced=true`).
+
+## Данные каталога (2026-10-12)
+
+- 290 кандидатов из открытых источников: loft2rent.ru (180, с телефонами, адресами,
+  вместимостью, ставкой «от») и delispace.ru (127, адрес без номера дома, без телефона —
+  контакт через площадку-источник до проверки). Скрипты: `scripts/import/parse_sources.py`
+  (HTML → candidates.json) и `scripts/import/build_candidates.py` (Nominatim-геокодинг,
+  округ по району, дедуп, запись в `data/lofts.csv`). Сырые страницы и кэш геокодера —
+  в scratchpad, не в репо.
+- Не взяты: bash.today (API без публичной схемы), goloft (ссылки на карточки не
+  отдаются без JS), 2ГИС/Яндекс (нужен ключ API). Overpass OSM отвечал 406.
 
 ## Google Analytics 4
 
