@@ -5,3 +5,4 @@ dist/
 .env.*
 data/private/
 .venv/
+dashboard/
