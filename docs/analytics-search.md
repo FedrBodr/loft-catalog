@@ -12,10 +12,12 @@ Document: analytics-search
   (`public/CNAME`, настройка Pages `cname=loftmap.ru`).
 - DNS на reg.ru (ns1/ns2.reg.ru): A `@` → 185.199.108/109/110/111.153; CNAME `www` →
   `fedrbodr.github.io`; TXT `@` google-site-verification (DNS-подтверждение домена).
-- Домен зарегистрирован 2026-10-12 01:31 UTC, делегирован в `.ru` ~03:20 UTC; HTTP
-  работает. HTTPS: сертификат GitHub выпускает после делегирования; `https_enforced`
-  включить, когда `curl -I https://loftmap.ru/` ответит 200
-  (`gh api -X PUT repos/FedrBodr/loft-catalog/pages -F https_enforced=true`).
+- Домен зарегистрирован 2026-10-12 01:31 UTC, делегирован в `.ru` ~03:20 UTC.
+- HTTPS: три недели GitHub держал `dns_resolves: false` / `Dnsruby::ServFail` при верных
+  DNS (резолвер GitHub, не наша сторона). 2026-11-02 health показал `dns_resolves: true`;
+  после снятия и повторного добавления домена через API (`PUT .../pages -F cname=`, затем
+  `-F cname=loftmap.ru`) сертификат Let's Encrypt выпущен за минуту, `https_enforced=true`.
+  Рецепт на будущее: если cert «не выпускается», сначала смотреть `pages/health`.
 
 ## Данные каталога (2026-10-12, вечер)
 
