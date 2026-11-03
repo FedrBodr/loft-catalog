@@ -85,7 +85,10 @@ Document: analytics-search
 - Вебмастер: хост `https:loftmap.ru:443` добавлен и подтверждён файлом
   `public/yandex_4c4948565030fbf8.html` (HTML_FILE, не удалять). Sitemap
   `sitemap-index.xml` есть в robots.txt; запись через API (`user-added-sitemaps`,
-  `recrawl/queue`) в день подключения отвечала 504, повторять позже. Токен
+  `recrawl/queue`) отвечала 504 всю ночь 02–03.11 (12 попыток по 10 мин): причина
+  в `GET …/summary/` → `HOST_NOT_LOADED`, Яндекс ещё не загрузил хост после
+  подтверждения. Повторять POST только после того, как summary перестанет
+  отдавать HOST_NOT_LOADED (обычно 1–2 дня). Токен
   `~/.config/fedrbodr/webmaster.token` (user_id 287569571); `yandex-webmaster.token`
   протух, не использовать.
 
@@ -103,4 +106,5 @@ Document: analytics-search
 - Формы заявки/правки сейчас работают через fallback: заявка открывает Telegram
   владельца с готовым текстом (`PUBLIC_OWNER_TG`, по умолчанию `fedrbodr` — заменить
   на реальный ник). Worker'ы (§7.1 спека) — после появления Cloudflare/VPS.
-- Вебмастер: добавить sitemap и переобход через API, когда перестанет отвечать 504.
+- Вебмастер: добавить sitemap и переобход через API, когда `summary/` перестанет
+  отвечать HOST_NOT_LOADED (проверить 04–05.11).
