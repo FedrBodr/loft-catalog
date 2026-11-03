@@ -62,6 +62,10 @@ for lid in ids:
     out.append([r['venue'], r['events'], f"{r['scenario']}: {r['why']}"] if r else ['', '', 'check: нет данных loft2rent'])
 print('в очереди:', Counter(o[2].split(':')[0] for o in out))
 if dry: sys.exit()
+meta = svc.get(spreadsheetId=SHEET, fields='sheets.properties').execute()
+sh = next(x['properties'] for x in meta['sheets'] if x['properties']['title'] == 'Очередь')
+if sh['gridProperties']['columnCount'] < 19:
+    svc.batchUpdate(spreadsheetId=SHEET, body={'requests': [{'appendDimension': {'sheetId': sh['sheetId'], 'dimension': 'COLUMNS', 'length': 19 - sh['gridProperties']['columnCount']}}]}).execute()
 svc.values().update(spreadsheetId=SHEET, range='Очередь!Q1:S1', valueInputOption='RAW', body={'values': [['Тип (loft2rent)', 'Мероприятия (loft2rent)', 'Сценарий']]}).execute()
 svc.values().update(spreadsheetId=SHEET, range=f'Очередь!Q2:S{len(out)+1}', valueInputOption='RAW', body={'values': out}).execute()
 (ROOT / 'data/private/scenarios.json').write_text(json.dumps(result, ensure_ascii=False, indent=0), encoding='utf-8')
