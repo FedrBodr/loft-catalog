@@ -74,13 +74,20 @@ Document: analytics-search
 - Состояние: TXT опубликован на reg.ru; верификация **ожидает** делегирования домена
   (фоновый монитор повторяет `verify` + `gsc` автоматически).
 
-## Яндекс (отложено по решению владельца 2026-10-12)
+## Яндекс (включено 2026-11-03 по команде владельца)
 
-- Метрика: API отвечает, счётчик не создавался. Создать: `metrika.py POST
-  /management/v1/counters` с `site2.site=loftmap.ru`, цели `generate_lead`,
-  `contact_click`; ID → переменная `PUBLIC_YM_ID` (тег уже в Base.astro).
-- Вебмастер: добавить хост, DNS/meta-подтверждение, sitemap. Скрипт по аналогии с
-  verify.py через `~/.config/fedrbodr/webmaster.token`.
+- Метрика: счётчик **114034230** «LoftMap (loftmap.ru)», TZ Europe/Moscow. Цели типа
+  JS-событие: `generate_lead` (678307022, «Заявка отправлена»), `contact_click`
+  (678307023, «Клик по контакту лофта»). ID передаётся в сборку переменной GitHub Actions
+  `PUBLIC_YM_ID`; тег в `src/layouts/Base.astro`, события шлёт `lmTrack` вместе с GA.
+  Проверка: на странице `window.lmYM = 114034230`; статус кода в кабинете обновится
+  после первых визитов.
+- Вебмастер: хост `https:loftmap.ru:443` добавлен и подтверждён файлом
+  `public/yandex_4c4948565030fbf8.html` (HTML_FILE, не удалять). Sitemap
+  `sitemap-index.xml` есть в robots.txt; запись через API (`user-added-sitemaps`,
+  `recrawl/queue`) в день подключения отвечала 504, повторять позже. Токен
+  `~/.config/fedrbodr/webmaster.token` (user_id 287569571); `yandex-webmaster.token`
+  протух, не использовать.
 
 ## Дашборд
 
@@ -96,4 +103,4 @@ Document: analytics-search
 - Формы заявки/правки сейчас работают через fallback: заявка открывает Telegram
   владельца с готовым текстом (`PUBLIC_OWNER_TG`, по умолчанию `fedrbodr` — заменить
   на реальный ник). Worker'ы (§7.1 спека) — после появления Cloudflare/VPS.
-- Метрика и Вебмастер — по команде владельца.
+- Вебмастер: добавить sitemap и переобход через API, когда перестанет отвечать 504.
